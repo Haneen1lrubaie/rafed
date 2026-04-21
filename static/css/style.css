@@ -360,3 +360,14 @@ img { max-width: 100%; }
   .footer-grid { grid-template-columns: 1fr; }
   .roles-grid { grid-template-columns: 1fr; }
 }
+
+.nav-brand-logos {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.nav-brand-logos img {
+  height: 38px;
+  width: auto;
+  object-fit: contain;
+}
