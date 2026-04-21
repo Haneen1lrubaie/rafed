@@ -14,12 +14,12 @@
 <nav class="navbar">
 
   <div class="nav-brand-logos">
-  <img src="/static/tamkeenLogo.png" alt="CDA">
-  <img src="/static/rafed-logo.jpg" alt="رفد">
+   <img src="/static/rafed-logo.jpg" alt="رفد">
+    <img src="/static/tamkeenLogo.png" alt="CDA">
+
 </div>
 
   <div class="nav-links">
-    <a href="{{ url_for('dashboard') }}" style="font-weight:600;color:var(--gray-700);">لوحة التحكم</a>
     <span class="nav-user">{{ session.get('name') }}</span>
     <span class="badge badge-{{ session.get('role') }}">
       {% if session.get('role') == 'admin' %}أدمن
