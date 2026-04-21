@@ -80,7 +80,7 @@
   <div class="card mt-2">
     <h3>المجموعات</h3>
     {% if groups %}
-    <table class="table">
+    <div class="table-responsive"><table class="table table-cards">
       <thead>
         <tr>
           <th>المجموعة</th>
@@ -94,9 +94,9 @@
       <tbody>
         {% for g in groups %}
         <tr>
-          <td><strong>{{ g.name }}</strong></td>
-          <td>{{ g.start_date or '—' }}</td>
-          <td>{{ g.trainee_count }}</td>
+          <td data-label="المجموعة"><strong>{{ g.name }}</strong></td>
+          <td data-label="تاريخ البدء">{{ g.start_date or '—' }}</td>
+          <td data-label="المتدربون">{{ g.trainee_count }}</td>
           <td>
             {% for sup in g.supervisors %}
               <span class="badge badge-supervisor" style="margin:2px;">
@@ -140,13 +140,13 @@
   <!-- Initiatives -->
   <div class="card mt-2">
     <h3>جميع المبادرات</h3>
-    <table class="table">
+    <div class="table-responsive"><table class="table table-cards">
       <thead><tr><th>المتدرب</th><th>المجموعة</th><th>الملف</th><th>التاريخ</th><th>الحالة</th><th>إجراء</th></tr></thead>
       <tbody>
         {% for i in initiatives %}
         <tr>
-          <td>{{ i.trainee_name }}</td>
-          <td>{{ i.group_name or '—' }}</td>
+          <td data-label="المتدرب">{{ i.trainee_name }}</td>
+          <td data-label="المجموعة">{{ i.group_name or '—' }}</td>
           <td>
             <a href="{{ i.file_url or url_for('static', filename='uploads/' + i.filename) }}" target="_blank">
               {{ i.original_name }}
@@ -168,13 +168,13 @@
   <!-- ✅ IMPROVEMENT 6: Users with delete option -->
   <div class="card mt-2">
     <h3>إدارة المستخدمين</h3>
-    <table class="table">
+    <div class="table-responsive"><table class="table table-cards">
       <thead><tr><th>الاسم</th><th>البريد</th><th>الدور</th><th>المجموعة</th><th>الحالة</th><th>إجراءات</th></tr></thead>
       <tbody>
         {% for u in users %}
         <tr class="{{ '' if u.is_active else 'row-disabled' }}">
-          <td>{{ u.name }}</td>
-          <td>{{ u.email }}</td>
+          <td data-label="الاسم">{{ u.name }}</td>
+          <td data-label="البريد">{{ u.email }}</td>
           <td><span class="badge badge-{{ u.role }}">
             {% if u.role == 'supervisor' %}مشرف{% else %}متدرب{% endif %}
           </span></td>

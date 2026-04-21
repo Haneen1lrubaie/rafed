@@ -144,15 +144,15 @@
   <div class="card mt-2">
     <h3>المبادرات المسلّمة</h3>
     {% if initiatives %}
-    <table class="table">
+    <div class="table-responsive"><table class="table table-cards">
       <thead>
         <tr><th>المتدرب</th><th>الملف</th><th>تاريخ الرفع</th><th>الحالة</th><th>تقييم</th></tr>
       </thead>
       <tbody>
         {% for i in initiatives %}
         <tr>
-          <td>{{ i.name }}</td>
-          <td>
+          <td data-label="المتدرب">{{ i.name }}</td>
+          <td data-label="الملف">
             <a href="{{ i.file_url or url_for('static', filename='uploads/' + i.filename) }}" target="_blank">
               {{ i.original_name }}
             </a>

@@ -64,19 +64,19 @@
   <div class="card mt-2">
     <h3>مبادراتي</h3>
     {% if initiatives %}
-    <table class="table">
+    <div class="table-responsive"><table class="table table-cards">
       <thead>
         <tr><th>اسم الملف</th><th>تاريخ الرفع</th><th>الحالة</th><th>ملاحظة</th><th>إجراء</th></tr>
       </thead>
       <tbody>
         {% for i in initiatives %}
         <tr>
-          <td>
+          <td data-label="اسم الملف">
             <a href="{{ i.file_url or url_for('static', filename='uploads/' + i.filename) }}" target="_blank">
               {{ i.original_name }}
             </a>
           </td>
-          <td>{{ i.uploaded_at.strftime('%Y-%m-%d') if i.uploaded_at else '—' }}</td>
+          <td data-label="تاريخ الرفع">{{ i.uploaded_at.strftime('%Y-%m-%d') if i.uploaded_at else '—' }}</td>
           <td>
             <span class="badge badge-{{ i.status }}">
               {% if i.status == 'pending' %}بانتظار المراجعة

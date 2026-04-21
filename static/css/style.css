@@ -361,16 +361,75 @@ img { max-width: 100%; }
   .roles-grid { grid-template-columns: 1fr; }
 }
 
-.nav-brand-logos {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.nav-brand-logos img {
-  height: 65px;
-  width: auto;
-  object-fit: contain;
-}
-.nav-brand-logos img:last-child {
-  height: 55px;
+/* ══ RESPONSIVE — TABLES (mobile cards) ══ */
+@media (max-width: 768px) {
+
+  /* تحويل الجداول لبطاقات في الموبايل */
+  .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* جدول المجموعات */
+  .table-cards thead { display: none; }
+  .table-cards tbody tr {
+    display: block;
+    background: white;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    box-shadow: var(--shadow-sm);
+  }
+  .table-cards tbody td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.4rem 0;
+    border-bottom: 1px solid var(--gray-100);
+    font-size: 0.88rem;
+    text-align: right;
+  }
+  .table-cards tbody td:last-child { border-bottom: none; }
+  .table-cards tbody td::before {
+    content: attr(data-label);
+    font-weight: 700;
+    color: var(--gray-700);
+    font-size: 0.82rem;
+    flex-shrink: 0;
+    margin-left: 0.5rem;
+  }
+  .table-cards .actions-cell {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  /* فورم تسجيل الحضور — من اليمين */
+  .attendance-form .form-row {
+    flex-direction: column;
+    align-items: flex-end;
+  }
+  .attendance-form .form-row .form-group {
+    width: 100%;
+    text-align: right;
+  }
+  .attendance-form .form-row button {
+    width: 100%;
+    margin-top: 0.5rem;
+  }
+
+  /* inline-form-sm في الموبايل */
+  .inline-form-sm {
+    flex-direction: column;
+    align-items: flex-end;
+    width: 100%;
+  }
+  .inline-form-sm select { width: 100%; }
+  .inline-form-sm button { width: 100%; }
+
+  /* إدارة المستخدمين — actions من اليمين */
+  .actions-cell {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 0.4rem;
+  }
 }
