@@ -403,9 +403,9 @@ img { max-width: 100%; }
   }
 
   /* فورم تسجيل الحضور — من اليمين */
-  .attendance-form .form-row {
+.attendance-form .form-row {
     flex-direction: column;
-    align-items: flex-end;
+    align-items: stretch;
   }
   .attendance-form .form-row .form-group {
     width: 100%;
