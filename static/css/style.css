@@ -367,7 +367,10 @@ img { max-width: 100%; }
   gap: 8px;
 }
 .nav-brand-logos img {
-  height: 48px;
+  height: 65px;
   width: auto;
   object-fit: contain;
+}
+.nav-brand-logos img:last-child {
+  height: 55px;
 }
