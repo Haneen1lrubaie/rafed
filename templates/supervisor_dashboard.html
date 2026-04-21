@@ -1,0 +1,207 @@
+{% extends 'base.html' %}
+{% block title %}لوحة المشرف — رفد{% endblock %}
+{% block content %}
+<div class="dashboard">
+  <h1 class="page-title">لوحة المشرف — {{ session.name }}</h1>
+
+  {% if not my_groups %}
+  <div class="card" style="text-align:center;padding:3rem;">
+    <div style="font-size:3rem;margin-bottom:1rem;">⏳</div>
+    <h3>في انتظار التعيين</h3>
+    <p style="color:var(--gray);">لم يتم تعيينك على مجموعة بعد. تواصل مع الأدمن.</p>
+    <p style="color:var(--gray);font-size:.85rem;">بريد الأدمن: rafed26program@gmail.com</p>
+  </div>
+  {% else %}
+
+  <!-- ✅ IMPROVEMENT 2: Group selector if multiple groups -->
+  {% if my_groups|length > 1 %}
+  <div class="card" style="margin-bottom:1rem;">
+    <h3>اختر المجموعة</h3>
+    <div style="display:flex;gap:.75rem;flex-wrap:wrap;">
+      {% for g in my_groups %}
+      <a href="{{ url_for('supervisor_dashboard', group_id=g.id) }}"
+         class="btn {% if group and group.id == g.id %}btn-primary{% else %}btn-outline{% endif %}">
+        {{ g.name }}
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if group %}
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-num">{{ trainees|length }}</div>
+      <div class="stat-label">إجمالي المتدربين</div>
+    </div>
+    <div class="stat-card stat-green">
+      <div class="stat-num">{{ present_ids|length }}</div>
+      <div class="stat-label">حاضرون اليوم</div>
+    </div>
+    <div class="stat-card stat-amber">
+      <div class="stat-num">{{ trainees|length - present_ids|length }}</div>
+      <div class="stat-label">غائبون اليوم</div>
+    </div>
+    <div class="stat-card stat-coral">
+      <div class="stat-num">{{ initiatives|selectattr('status','eq','pending')|list|length }}</div>
+      <div class="stat-label">مبادرات معلّقة</div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:1rem;border-right:4px solid var(--purple);">
+    <div style="display:flex;gap:2rem;align-items:center;flex-wrap:wrap;">
+      <div>
+        <div style="font-size:.82rem;color:var(--gray);">المجموعة</div>
+        <div style="font-weight:700;font-size:1.2rem;color:var(--purple);">{{ group.name }}</div>
+      </div>
+      {% if group.start_date %}
+      <div>
+        <div style="font-size:.82rem;color:var(--gray);">تاريخ البدء</div>
+        <div style="font-weight:600;">{{ group.start_date }}</div>
+      </div>
+      {% endif %}
+      <div style="margin-right:auto;">
+        <a href="{{ url_for('supervisor_export', format='excel', group_id=group.id) }}" class="btn btn-sm btn-outline">تصدير Excel</a>
+        <a href="{{ url_for('supervisor_export', format='pdf', group_id=group.id) }}" class="btn btn-sm btn-outline" style="margin-right:.5rem;">تصدير PDF</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ✅ IMPROVEMENT 3: Supervisor registers attendance (not trainee) -->
+  <div class="card mt-2">
+    <h3>تسجيل الحضور</h3>
+    <form method="POST" action="{{ url_for('supervisor_attendance') }}" class="attendance-form">
+      <input type="hidden" name="group_id" value="{{ group.id }}">
+      <div class="form-row">
+        <div class="form-group">
+          <label>المتدرب</label>
+          <select name="user_id" required>
+            <option value="">اختر المتدرب</option>
+            {% for t in trainees %}
+            <option value="{{ t.id }}">{{ t.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>التاريخ</label>
+          <input type="date" name="date" value="{{ today }}" required>
+        </div>
+        <div class="form-group">
+          <label>الحالة</label>
+          <select name="status">
+            <option value="present">حاضر</option>
+            <option value="absent">غائب</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary">تسجيل</button>
+      </div>
+    </form>
+
+    <h3 style="margin-top:1.5rem;">حضور اليوم — {{ today }}</h3>
+    <table class="table">
+      <thead><tr><th>المتدرب</th><th>الحالة</th></tr></thead>
+      <tbody>
+        {% for t in trainees %}
+        <tr>
+          <td>{{ t.name }}</td>
+          <td>
+            {% if t.id in present_ids %}
+              <span class="badge badge-present">حاضر</span>
+            {% else %}
+              <span class="badge badge-absent">غائب</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card mt-2">
+    <h3>سجل الحضور الكامل</h3>
+    {% if attendance_full %}
+    <table class="table">
+      <thead><tr><th>المتدرب</th><th>التاريخ</th><th>الحالة</th></tr></thead>
+      <tbody>
+        {% for a in attendance_full %}
+        <tr>
+          <td>{{ a.trainee_name }}</td>
+          <td>{{ a.date }}</td>
+          <td>
+            <span class="badge badge-{{ 'present' if a.status == 'present' else 'absent' }}">
+              {{ 'حاضر' if a.status == 'present' else 'غائب' }}
+            </span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+      <p class="empty-state">لا يوجد سجل حضور بعد</p>
+    {% endif %}
+  </div>
+
+  <div class="card mt-2">
+    <h3>المبادرات المسلّمة</h3>
+    {% if initiatives %}
+    <table class="table">
+      <thead>
+        <tr><th>المتدرب</th><th>الملف</th><th>تاريخ الرفع</th><th>الحالة</th><th>تقييم</th></tr>
+      </thead>
+      <tbody>
+        {% for i in initiatives %}
+        <tr>
+          <td>{{ i.name }}</td>
+          <td>
+            <a href="{{ i.file_url or url_for('static', filename='uploads/' + i.filename) }}" target="_blank">
+              {{ i.original_name }}
+            </a>
+          </td>
+          <td>{{ i.uploaded_at.strftime('%Y-%m-%d') if i.uploaded_at else '—' }}</td>
+          <td>
+            <span class="badge badge-{{ i.status }}">
+              {% if i.status == 'pending' %}معلّقة
+              {% elif i.status == 'accepted' %}مقبولة
+              {% else %}مرفوضة{% endif %}
+            </span>
+          </td>
+          <td>
+            <button class="btn btn-sm btn-outline" onclick="openReview({{ i.id }}, '{{ i.original_name }}')">
+              تقييم
+            </button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+      <p class="empty-state">لا توجد مبادرات بعد</p>
+    {% endif %}
+  </div>
+  {% endif %}
+  {% endif %}
+</div>
+
+<div class="modal" id="reviewModal">
+  <div class="modal-box">
+    <h3>تقييم: <span id="modalTitle"></span></h3>
+    <form method="POST" id="reviewForm">
+      <div class="form-group">
+        <label>القرار</label>
+        <div class="radio-group">
+          <label><input type="radio" name="status" value="accepted" required> قبول</label>
+          <label><input type="radio" name="status" value="rejected"> رفض</label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>ملاحظات (اختياري)</label>
+        <textarea name="feedback" rows="3" placeholder="أكتب ملاحظاتك هنا..."></textarea>
+      </div>
+      <div class="modal-actions">
+        <button type="submit" class="btn btn-primary">حفظ التقييم</button>
+        <button type="button" class="btn btn-outline" onclick="closeModal()">إلغاء</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

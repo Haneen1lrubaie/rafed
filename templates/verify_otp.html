@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% block title %}التحقق من البريد — رفد{% endblock %}
+{% block content %}
+<div class="auth-container">
+  <div class="auth-card">
+    <div class="otp-icon">✉</div>
+    <h2>تحقق من بريدك</h2>
+    <p class="otp-sub">أرسلنا رمز مكوّن من 6 أرقام إلى</p>
+    <p class="otp-email">{{ email }}</p>
+
+    <form method="POST">
+      <div class="form-group">
+        <label>رمز التحقق</label>
+        <input type="text" name="otp" id="otpInput"
+               maxlength="6" pattern="\d{6}" required
+               placeholder="_ _ _ _ _ _"
+               autocomplete="one-time-code"
+               style="text-align:center;font-size:1.6rem;letter-spacing:10px;font-weight:bold;">
+      </div>
+
+      <div id="timer-row" class="timer-row">
+        <span>صالح لمدة: </span>
+        <span id="timer" class="timer-num">10:00</span>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-full">تحقق وأكمل التسجيل</button>
+    </form>
+
+    <div class="resend-row">
+      <span id="resend-msg" class="hint"></span>
+      <button id="resendBtn" class="btn btn-outline btn-sm" onclick="resendOtp()" disabled>
+        إعادة الإرسال
+      </button>
+    </div>
+
+    <p class="auth-link"><a href="{{ url_for('register') }}">← العودة للتسجيل</a></p>
+  </div>
+</div>
+
+<style>
+.otp-icon { font-size: 2.5rem; text-align:center; margin-bottom:.5rem; }
+.otp-sub  { text-align:center; color: var(--gray); margin-bottom:.25rem; }
+.otp-email{ text-align:center; font-weight:600; color: var(--teal); margin-bottom:1.25rem; }
+.timer-row{ display:flex; justify-content:center; align-items:center; gap:.5rem;
+            font-size:.88rem; color:var(--gray); margin-bottom:1rem; }
+.timer-num{ font-weight:700; color:var(--teal); }
+.timer-num.expired { color: var(--red); }
+.resend-row{ display:flex; align-items:center; justify-content:center; gap:.75rem; margin-top:1rem; }
+</style>
+
+<script>
+let seconds = 600;
+const timerEl  = document.getElementById('timer');
+const resendBtn = document.getElementById('resendBtn');
+
+const tick = setInterval(() => {
+  seconds--;
+  if (seconds <= 0) {
+    clearInterval(tick);
+    timerEl.textContent = 'انتهت صلاحية الرمز';
+    timerEl.classList.add('expired');
+    resendBtn.disabled = false;
+    return;
+  }
+  const m = String(Math.floor(seconds / 60)).padStart(2, '0');
+  const s = String(seconds % 60).padStart(2, '0');
+  timerEl.textContent = `${m}:${s}`;
+  if (seconds === 120) resendBtn.disabled = false;
+}, 1000);
+
+async function resendOtp() {
+  resendBtn.disabled = true;
+  const msg = document.getElementById('resend-msg');
+  msg.textContent = 'جاري الإرسال...';
+  try {
+    const res  = await fetch('/api/resend-otp', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+    const data = await res.json();
+    msg.textContent = data.msg;
+    if (data.ok) {
+      seconds = 600;
+      timerEl.classList.remove('expired');
+    }
+  } catch {
+    msg.textContent = 'حدث خطأ، حاول مجدداً';
+    resendBtn.disabled = false;
+  }
+}
+
+document.getElementById('otpInput').addEventListener('input', function() {
+  this.value = this.value.replace(/\D/g, '').slice(0, 6);
+});
+</script>
+{% endblock %}

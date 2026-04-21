@@ -1,0 +1,237 @@
+{% extends 'base.html' %}
+{% block title %}لوحة الأدمن — رفد{% endblock %}
+{% block content %}
+<div class="dashboard">
+  <h1 class="page-title">لوحة الأدمن</h1>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-num">{{ stats.trainees }}</div><div class="stat-label">متدرب</div></div>
+    <div class="stat-card stat-purple"><div class="stat-num">{{ stats.supervisors }}</div><div class="stat-label">مشرف</div></div>
+    <div class="stat-card stat-coral"><div class="stat-num">{{ stats.groups }}</div><div class="stat-label">مجموعة</div></div>
+    <div class="stat-card stat-green"><div class="stat-num">{{ stats.today_present }}</div><div class="stat-label">حاضر اليوم</div></div>
+    <div class="stat-card stat-amber"><div class="stat-num">{{ stats.pending }}</div><div class="stat-label">مبادرة معلّقة</div></div>
+  </div>
+
+  <div class="admin-grid">
+
+    <!-- ✅ IMPROVEMENT 1: Create Group with Save/Cancel -->
+    <div class="card">
+      <h3>إنشاء مجموعة جديدة</h3>
+      <form method="POST" action="{{ url_for('admin_create_group') }}">
+        <div class="form-group">
+          <label>اسم المجموعة *</label>
+          <input type="text" name="name" placeholder="اسم المجموعة" required>
+        </div>
+        <div class="form-group">
+          <label>تاريخ البدء</label>
+          <input type="date" name="start_date" value="{{ today }}">
+        </div>
+        <div class="form-group">
+          <label>مشرف أولي (اختياري)</label>
+          <select name="supervisor_id">
+            <option value="">بدون مشرف</option>
+            {% for s in all_supervisors %}
+            <option value="{{ s.id }}">{{ s.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div style="display:flex;gap:.75rem;">
+          <button type="submit" name="action" value="save" class="btn btn-primary">💾 حفظ</button>
+          <button type="submit" name="action" value="cancel" class="btn btn-outline">✕ إلغاء</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- ✅ IMPROVEMENT 4: Invite code for supervisors only -->
+    <div class="card">
+      <h3>كودات الدعوة — للمشرفين فقط</h3>
+      <form method="POST" action="{{ url_for('admin_create_invite') }}">
+        <p style="color:var(--gray);font-size:.9rem;margin-bottom:1rem;">
+          تُنشئ كود دعوة خاص بتسجيل المشرفين فقط.
+        </p>
+        <button type="submit" class="btn btn-primary">إنشاء كود دعوة مشرف</button>
+      </form>
+      <p class="hint mt-1">الكود يظهر في رسالة التنبيه — احفظه وشاركه مع المشرف</p>
+    </div>
+
+    <!-- Export -->
+    <div class="card">
+      <h3>تصدير التقارير</h3>
+      <div class="export-section">
+        <div class="form-group">
+          <label>اختر المجموعة</label>
+          <select id="exportGroup">
+            <option value="">جميع المجموعات</option>
+            {% for g in groups %}
+            <option value="{{ g.id }}">{{ g.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="export-btns">
+          <button onclick="doExport('excel')" class="btn btn-outline">تصدير Excel</button>
+          <button onclick="doExport('pdf')" class="btn btn-outline">تصدير PDF</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ✅ IMPROVEMENT 2: Groups with multiple supervisors -->
+  <div class="card mt-2">
+    <h3>المجموعات</h3>
+    {% if groups %}
+    <table class="table">
+      <thead>
+        <tr>
+          <th>المجموعة</th>
+          <th>تاريخ البدء</th>
+          <th>المتدربون</th>
+          <th>المشرفون</th>
+          <th>إضافة مشرف</th>
+          <th>إجراءات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for g in groups %}
+        <tr>
+          <td><strong>{{ g.name }}</strong></td>
+          <td>{{ g.start_date or '—' }}</td>
+          <td>{{ g.trainee_count }}</td>
+          <td>
+            {% for sup in g.supervisors %}
+              <span class="badge badge-supervisor" style="margin:2px;">
+                {{ sup.name }}
+                <form method="POST" action="{{ url_for('admin_remove_supervisor', gid=g.id, sid=sup.id) }}"
+                      style="display:inline"
+                      onsubmit="return confirm('إزالة هذا المشرف من المجموعة؟')">
+                  <button type="submit" style="background:none;border:none;cursor:pointer;color:#A32D2D;font-weight:bold;padding:0 2px;">✕</button>
+                </form>
+              </span>
+            {% else %}
+              <span style="color:var(--gray);">لا يوجد</span>
+            {% endfor %}
+          </td>
+          <td>
+            <form method="POST" action="{{ url_for('admin_assign_supervisor', gid=g.id) }}" class="inline-form-sm">
+              <select name="supervisor_id" required>
+                <option value="">اختر مشرف</option>
+                {% for s in all_supervisors %}
+                <option value="{{ s.id }}">{{ s.name }}</option>
+                {% endfor %}
+              </select>
+              <button type="submit" class="btn btn-sm btn-outline">إضافة</button>
+            </form>
+          </td>
+          <td>
+            <form method="POST" action="{{ url_for('admin_delete_group', gid=g.id) }}"
+                  onsubmit="return confirm('هل أنت متأكد من حذف المجموعة؟ سيتم إلغاء تعيين المتدربين منها.')">
+              <button type="submit" class="btn btn-sm" style="background:#A32D2D;color:white;">حذف</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="empty-state">لا توجد مجموعات بعد</p>
+    {% endif %}
+  </div>
+
+  <!-- Initiatives -->
+  <div class="card mt-2">
+    <h3>جميع المبادرات</h3>
+    <table class="table">
+      <thead><tr><th>المتدرب</th><th>المجموعة</th><th>الملف</th><th>التاريخ</th><th>الحالة</th><th>إجراء</th></tr></thead>
+      <tbody>
+        {% for i in initiatives %}
+        <tr>
+          <td>{{ i.trainee_name }}</td>
+          <td>{{ i.group_name or '—' }}</td>
+          <td>
+            <a href="{{ i.file_url or url_for('static', filename='uploads/' + i.filename) }}" target="_blank">
+              {{ i.original_name }}
+            </a>
+          </td>
+          <td>{{ i.uploaded_at.strftime('%Y-%m-%d') if i.uploaded_at else '—' }}</td>
+          <td><span class="badge badge-{{ i.status }}">
+            {% if i.status == 'pending' %}معلّقة
+            {% elif i.status == 'accepted' %}مقبولة
+            {% else %}مرفوضة{% endif %}
+          </span></td>
+          <td><button class="btn btn-sm btn-outline" onclick="openReview({{ i.id }}, '{{ i.original_name }}')">تقييم</button></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ✅ IMPROVEMENT 6: Users with delete option -->
+  <div class="card mt-2">
+    <h3>إدارة المستخدمين</h3>
+    <table class="table">
+      <thead><tr><th>الاسم</th><th>البريد</th><th>الدور</th><th>المجموعة</th><th>الحالة</th><th>إجراءات</th></tr></thead>
+      <tbody>
+        {% for u in users %}
+        <tr class="{{ '' if u.is_active else 'row-disabled' }}">
+          <td>{{ u.name }}</td>
+          <td>{{ u.email }}</td>
+          <td><span class="badge badge-{{ u.role }}">
+            {% if u.role == 'supervisor' %}مشرف{% else %}متدرب{% endif %}
+          </span></td>
+          <td>{{ u.group_name or '—' }}</td>
+          <td><span class="badge badge-{{ 'present' if u.is_active else 'absent' }}">
+            {{ 'نشط' if u.is_active else 'معطّل' }}
+          </span></td>
+          <td class="actions-cell">
+            <form method="POST" action="{{ url_for('admin_toggle_user', uid=u.id) }}" style="display:inline">
+              <button type="submit" class="btn btn-sm btn-outline">
+                {{ 'تعطيل' if u.is_active else 'تفعيل' }}
+              </button>
+            </form>
+            {% if u.role == 'trainee' %}
+            <form method="POST" action="{{ url_for('admin_move_user', uid=u.id) }}" class="inline-form-sm">
+              <select name="group_id">
+                <option value="">بدون مجموعة</option>
+                {% for g in groups %}
+                <option value="{{ g.id }}" {{ 'selected' if u.group_id == g.id }}>{{ g.name }}</option>
+                {% endfor %}
+              </select>
+              <button type="submit" class="btn btn-sm btn-outline">نقل</button>
+            </form>
+            {% endif %}
+            <form method="POST" action="{{ url_for('admin_delete_user', uid=u.id) }}" style="display:inline"
+                  onsubmit="return confirm('هل أنت متأكد من حذف هذا المستخدم نهائياً؟ لا يمكن التراجع.')">
+              <button type="submit" class="btn btn-sm" style="background:#A32D2D;color:white;">حذف</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Review Modal -->
+<div class="modal" id="reviewModal">
+  <div class="modal-box">
+    <h3>تقييم: <span id="modalTitle"></span></h3>
+    <form method="POST" id="reviewForm">
+      <div class="form-group">
+        <label>القرار</label>
+        <div class="radio-group">
+          <label><input type="radio" name="status" value="accepted" required> قبول</label>
+          <label><input type="radio" name="status" value="rejected"> رفض</label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>ملاحظات</label>
+        <textarea name="feedback" rows="3" placeholder="أكتب ملاحظاتك..."></textarea>
+      </div>
+      <div class="modal-actions">
+        <button type="submit" class="btn btn-primary">حفظ</button>
+        <button type="button" class="btn btn-outline" onclick="closeModal()">إلغاء</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% block title %}إنشاء حساب — رفد{% endblock %}
+{% block content %}
+<div class="auth-container">
+  <div class="auth-card">
+    <h2>إنشاء حساب</h2>
+    <form method="POST" id="regForm">
+      <div class="form-group">
+        <label>الاسم الكامل</label>
+        <input type="text" name="name" required placeholder="اسمك الكامل" minlength="3">
+      </div>
+
+      <div class="form-group">
+        <label>البريد الإلكتروني</label>
+        <input type="email" name="email" id="emailInput" required placeholder="example@email.com"
+               autocomplete="email">
+        <div id="emailStatus" class="field-status"></div>
+      </div>
+
+      <div class="form-group">
+        <label>كلمة المرور</label>
+        <input type="password" name="password" id="passInput" required
+               placeholder="••••••••" minlength="6">
+        <div class="pass-strength" id="passStrength"></div>
+      </div>
+
+      <div class="form-group">
+        <label>كود الدعوة <span class="optional">(اختياري — للمشرفين فقط)</span></label>
+        <input type="text" name="invite_code" placeholder="أدخل كود الدعوة إذا كنت مشرفاً">
+      </div>
+
+      <button type="submit" id="submitBtn" class="btn btn-primary btn-full" disabled>
+        إرسال رمز التحقق
+      </button>
+    </form>
+    <p class="auth-link">عندك حساب؟ <a href="{{ url_for('login') }}">تسجيل الدخول</a></p>
+  </div>
+</div>
+
+<style>
+.field-status { font-size:.82rem; margin-top:.3rem; min-height:1rem; }
+.field-status.ok  { color: var(--green); }
+.field-status.err { color: var(--red); }
+.pass-strength { height:4px; border-radius:2px; margin-top:.5rem; transition:width .3s, background .3s; width:0; }
+</style>
+
+<script>
+const emailInput = document.getElementById('emailInput');
+const emailStatus= document.getElementById('emailStatus');
+const submitBtn  = document.getElementById('submitBtn');
+const passInput  = document.getElementById('passInput');
+const passBar    = document.getElementById('passStrength');
+
+let emailOk = false;
+let checkTimeout;
+
+emailInput.addEventListener('input', () => {
+  clearTimeout(checkTimeout);
+  emailStatus.textContent = '';
+  emailStatus.className   = 'field-status';
+  emailOk = false; updateBtn();
+
+  const val = emailInput.value.trim();
+  if (!val.includes('@') || !val.includes('.')) return;
+
+  emailStatus.textContent = 'جاري التحقق...';
+  checkTimeout = setTimeout(async () => {
+    try {
+      const res  = await fetch('/api/check-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: val })
+      });
+      const data = await res.json();
+      if (data.available) {
+        emailStatus.textContent = '✓ ' + data.msg;
+        emailStatus.className   = 'field-status ok';
+        emailOk = true;
+      } else {
+        emailStatus.textContent = '✗ ' + data.msg;
+        emailStatus.className   = 'field-status err';
+        emailOk = false;
+      }
+    } catch {
+      emailStatus.textContent = '';
+    }
+    updateBtn();
+  }, 600);
+});
+
+passInput.addEventListener('input', () => {
+  const len = passInput.value.length;
+  const colors = ['#E24B4A','#EF9F27','#1D9E75'];
+  const widths  = ['33%','66%','100%'];
+  const idx = len < 6 ? 0 : len < 10 ? 1 : 2;
+  passBar.style.width      = len === 0 ? '0' : widths[idx];
+  passBar.style.background = colors[idx];
+  updateBtn();
+});
+
+function updateBtn() {
+  submitBtn.disabled = !(emailOk && passInput.value.length >= 6);
+}
+</script>
+{% endblock %}

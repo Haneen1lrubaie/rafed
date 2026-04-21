@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+{% block title %}لوحة المتدرب — رفد{% endblock %}
+{% block content %}
+<div class="dashboard">
+  <h1 class="page-title">أهلاً، {{ session.name }}</h1>
+
+  {% if user and user.group_name %}
+  <div class="card card-teal mb-1" style="margin-bottom:1rem;">
+    <div style="display:flex;gap:2rem;flex-wrap:wrap;align-items:center;">
+      <div>
+        <div style="font-size:.82rem;color:var(--gray);">المجموعة</div>
+        <div style="font-weight:600;font-size:1.1rem;color:var(--teal);">{{ user.group_name }}</div>
+      </div>
+      {% if user.start_date %}
+      <div>
+        <div style="font-size:.82rem;color:var(--gray);">تاريخ البدء</div>
+        <div style="font-weight:600;">{{ user.start_date }}</div>
+      </div>
+      {% endif %}
+      <div>
+        <div style="font-size:.82rem;color:var(--gray);">أيام الحضور</div>
+        <div style="font-weight:600;color:var(--green);">{{ present_days }} يوم</div>
+      </div>
+      <div>
+        <div style="font-size:.82rem;color:var(--gray);">أيام الغياب</div>
+        <div style="font-weight:600;color:var(--red);">{{ absent_days }} يوم</div>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="alert alert-warning">لم يتم تعيينك على مجموعة بعد. تواصل مع المشرف أو الأدمن.</div>
+  {% endif %}
+
+  <!-- ✅ IMPROVEMENT 3: No self-checkin — attendance by supervisor only -->
+  <div class="card" style="border-right:4px solid var(--teal);">
+    <h3>الحضور اليوم — {{ today }}</h3>
+    {% if checked_today %}
+      <div class="status-badge present">✓ تم تسجيل حضورك اليوم</div>
+    {% else %}
+      <div class="alert alert-warning" style="margin:0;">
+        يتم تسجيل الحضور من قِبَل المشرف فقط
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Upload Initiative -->
+  <div class="card mt-2">
+    <h3>رفع مبادرة</h3>
+    <form method="POST" action="{{ url_for('trainee_upload') }}" enctype="multipart/form-data">
+      <div class="upload-area" id="uploadArea">
+        <p>اسحب الملف هنا أو</p>
+        <label class="btn btn-outline upload-label">
+          اختر ملف
+          <input type="file" name="file" accept=".pdf,.pptx" required id="fileInput" style="display:none">
+        </label>
+        <p class="file-info" id="fileInfo"></p>
+        <p class="upload-hint">PDF أو PPTX — حد أقصى 16MB</p>
+      </div>
+      <button type="submit" class="btn btn-primary btn-full mt-1">رفع الملف</button>
+    </form>
+  </div>
+
+  <!-- Initiatives -->
+  <div class="card mt-2">
+    <h3>مبادراتي</h3>
+    {% if initiatives %}
+    <table class="table">
+      <thead>
+        <tr><th>اسم الملف</th><th>تاريخ الرفع</th><th>الحالة</th><th>ملاحظة</th><th>إجراء</th></tr>
+      </thead>
+      <tbody>
+        {% for i in initiatives %}
+        <tr>
+          <td>
+            <a href="{{ i.file_url or url_for('static', filename='uploads/' + i.filename) }}" target="_blank">
+              {{ i.original_name }}
+            </a>
+          </td>
+          <td>{{ i.uploaded_at.strftime('%Y-%m-%d') if i.uploaded_at else '—' }}</td>
+          <td>
+            <span class="badge badge-{{ i.status }}">
+              {% if i.status == 'pending' %}بانتظار المراجعة
+              {% elif i.status == 'accepted' %}مقبولة
+              {% else %}مرفوضة{% endif %}
+            </span>
+          </td>
+          <td>{{ i.feedback or '—' }}</td>
+          <td>
+            <!-- ✅ IMPROVEMENT 5: Delete only if pending -->
+            {% if i.status == 'pending' %}
+            <form method="POST" action="{{ url_for('trainee_delete_initiative', init_id=i.id) }}"
+                  onsubmit="return confirm('هل تريد حذف هذا الملف؟')">
+              <button type="submit" class="btn btn-sm" style="background:#A32D2D;color:white;">حذف</button>
+            </form>
+            {% else %}
+            <span style="color:var(--gray);font-size:.85rem;">—</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+      <p class="empty-state">لم ترفع أي مبادرات بعد</p>
+    {% endif %}
+  </div>
+
+  <!-- Attendance History -->
+  <div class="card mt-2">
+    <h3>سجل حضوري الكامل</h3>
+    {% if attendance %}
+    <table class="table">
+      <thead><tr><th>التاريخ</th><th>الحالة</th></tr></thead>
+      <tbody>
+        {% for a in attendance %}
+        <tr>
+          <td>{{ a.date }}</td>
+          <td>
+            <span class="badge badge-{{ 'present' if a.status == 'present' else 'absent' }}">
+              {{ 'حاضر' if a.status == 'present' else 'غائب' }}
+            </span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+      <p class="empty-state">لا يوجد سجل حضور بعد</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

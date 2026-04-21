@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}رفد{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="role-{{ session.get('role', 'guest') }}">
+
+{% if session.get('user_id') %}
+<nav class="navbar">
+  <div class="nav-brand">رفد</div>
+  <div class="nav-links">
+    <a href="{{ url_for('dashboard') }}" style="font-weight:600;color:var(--gray-700);">لوحة التحكم</a>
+    <span class="nav-user">{{ session.get('name') }}</span>
+    <span class="badge badge-{{ session.get('role') }}">
+      {% if session.get('role') == 'admin' %}أدمن
+      {% elif session.get('role') == 'supervisor' %}مشرف
+      {% else %}متدرب{% endif %}
+    </span>
+    <a href="{{ url_for('logout') }}" class="btn-logout">خروج</a>
+  </div>
+</nav>
+{% endif %}
+
+<main class="main-content">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }}">{{ message }}</div>
+    {% endfor %}
+  {% endwith %}
+  {% block content %}{% endblock %}
+</main>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
