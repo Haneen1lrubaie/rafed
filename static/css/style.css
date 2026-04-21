@@ -433,3 +433,19 @@ img { max-width: 100%; }
     gap: 0.4rem;
   }
 }
+
+.nav-brand-logos {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.nav-brand-logos img {
+  height: 50px;
+  width: auto;
+  max-width: 160px;
+  object-fit: contain;
+}
+.nav-brand-logos img:last-child {
+  height: 42px;
+  max-width: 130px;
+}
